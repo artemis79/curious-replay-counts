@@ -1,5 +1,6 @@
 cloudpickle
 crafter
+dm-reverb
 gym==0.26.2
 dm_control
 jax
@@ -8,6 +9,5 @@ numpy
 optax
 rich
 ruamel.yaml
-tensorflow-cpu
-tensorflow_probability
 tensorflow
+tensorflow_probability
