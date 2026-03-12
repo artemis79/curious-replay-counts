@@ -6,6 +6,7 @@ from functools import partial as bind
 import embodied
 import numpy as np
 import tensorflow as tf
+import reverb
 
 
 class BasePrioritizedReverb:
@@ -13,7 +14,6 @@ class BasePrioritizedReverb:
   def __init__(
       self, length, capacity=None, directory=None, chunks=None, flush=100, hyper=None):
     del chunks
-    import reverb
     self.length = length
     self.capacity = capacity
     self.directory = directory and embodied.Path(directory)
@@ -188,6 +188,9 @@ class BasePrioritizedReverb:
   def update_visit_count(self, env_steps):
     flat_env_steps = env_steps.flatten()
     self.visit_count[flat_env_steps] += 1
+
+  def update_partition_count(self, batch):
+    print(batch)
 
   @abstractmethod
   def prioritize(self, key, env_steps, losses, td_error):

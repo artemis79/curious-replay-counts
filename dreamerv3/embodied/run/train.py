@@ -80,6 +80,9 @@ def train(agent, env, replay, logger, args):
       if getattr(replay, 'update_visit_count', False):
         replay.update_visit_count(jax.device_get(batch[0]['env_step']))
 
+      if getattr(replay, 'update_partition_count', False):
+        replay.update_partition_count(batch[0])
+
       if 'key' in outs:
         replay.prioritize(outs['key'],
                           outs['env_step'],

@@ -15,28 +15,44 @@
 # tensorboard --logdir ~/logdir
 
 # System
-FROM nvidia/cuda:11.4.2-cudnn8-devel-ubuntu20.04
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
+
+# ADDED:
+RUN echo "Acquire::http::Pipeline-Depth 0; Acquire::http::No-Cache true; Acquire::BrokenProxy true;" > /etc/apt/apt.conf.d/99fixbadproxy
+
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/San_Francisco
 ENV PYTHONUNBUFFERED 1
 ENV PIP_DISABLE_PIP_VERSION_CHECK 1
 ENV PIP_NO_CACHE_DIR 1
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
   ffmpeg git python3-pip vim libglew-dev \
   x11-xserver-utils xvfb \
-  && apt-get clean
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
+
+RUN apt-get update && apt-get install -y curl gnupg && \
+  curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-arm64 -o /usr/local/bin/bazel && \
+  chmod +x /usr/local/bin/bazel
+
+RUN apt-get install -y libffi-dev gettext freeglut3-dev libsdl2-dev zip libosmesa6-dev
+
+
 RUN pip3 install --upgrade pip
+
+
 
 # Envs
 ENV MUJOCO_GL egl
 ENV DMLAB_DATASET_PATH /dmlab_data
-COPY scripts scripts
-RUN sh scripts/install-dmlab.sh
+COPY embodied/scripts scripts
+# RUN sh scripts/install-dmlab.sh
 RUN sh scripts/install-atari.sh
-RUN sh scripts/install-minecraft.sh
+# RUN sh scripts/install-minecraft.sh
 ENV NUMBA_CACHE_DIR=/tmp
 RUN pip3 install crafter
-RUN pip3 install dm_control
+# RUN pip3 install dm_control
 RUN pip3 install robodesk
 RUN pip3 install bsuite
 
@@ -45,7 +61,7 @@ RUN pip3 install jax[cuda11_cudnn82] -f https://storage.googleapis.com/jax-relea
 RUN pip3 install jaxlib
 RUN pip3 install tensorflow_probability
 RUN pip3 install optax
-RUN pip3 install tensorflow-cpu
+RUN pip3 install tensorflow
 ENV XLA_PYTHON_CLIENT_MEM_FRACTION 0.8
 
 # Google Cloud DNS cache (optional)
@@ -60,4 +76,4 @@ RUN pip3 install numpy cloudpickle ruamel.yaml rich zmq msgpack
 COPY . /embodied
 RUN chown -R 1000:root /embodied && chmod -R 775 /embodied
 
-WORKDIR embodied
+WORKDIR /embodied
