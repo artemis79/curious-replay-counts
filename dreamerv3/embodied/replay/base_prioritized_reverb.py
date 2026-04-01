@@ -133,7 +133,7 @@ class BasePrioritizedReverb:
     for sample in dataset:
       seq = sample.data
       step_sampled = int(seq['env_step'][-1])
-      if step_sampled >= fill_start_step:
+      if step_sampled >= fill_start_step and step_sampled - fill_start_step < self.flush:
         key = sample.info.key
         self.step_to_keyA[step_sampled], self.step_to_keyB[step_sampled] = self._split_key(key)
         priorities_to_set[int(key)] = self.hyper['initial_priority'] / self.priority_scalar
