@@ -189,8 +189,8 @@ class BasePrioritizedReverb:
     flat_env_steps = env_steps.flatten()
     self.visit_count[flat_env_steps] += 1
 
-  def update_partition_count(self, batch):
-    print(batch)
+  # def update_partition_count(self, batch):
+  #   print(batch)
 
   @abstractmethod
   def prioritize(self, key, env_steps, losses, td_error):
