@@ -14,12 +14,13 @@ class Driver:
       bool: bool,
   }
 
-  def __init__(self, env, **kwargs):
+  def __init__(self, env, counts=None, **kwargs):
     assert len(env) > 0
     self._env = env
     self._kwargs = kwargs
     self._on_steps = []
     self._on_episodes = []
+    self.counts = counts
     self.reset()
 
   def reset(self):
@@ -40,6 +41,26 @@ class Driver:
     step, episode = 0, 0
     while step < steps or episode < episodes:
       step, episode = self._step(policy, step, episode)
+  
+  
+  def _intrinsic_reward(self, stoch_state, action):
+    action = action['action'].argmax()
+    rewards = 0 
+    if self.counts.mode == 'state_action':
+
+        state_counts = self.counts._checkpoint_counts * stoch_state
+        state_counts = np.sum(state_counts, axis=-1)
+        state_counts = np.min(state_counts, axis=-1)
+        # actions_expanded = jnp.expand_dims(action, -1)
+        print(state_counts)
+        rewards = np.sqrt(2 * np.log(np.sum(state_counts)) / state_counts[action])
+
+    return rewards
+  
+
+  def increment_counts(self, stoch_state, act):
+    self.counts.counts_add(stoch_state, act)
+    
 
   def _step(self, policy, step, episode):
     assert all(len(x) == len(self._env) for x in self._acts.values())
@@ -47,14 +68,25 @@ class Driver:
     obs = self._env.step(acts)
     obs = {k: convert(v) for k, v in obs.items()}
     assert all(len(x) == len(self._env) for x in obs.values()), obs
+    prev_state = self._state
     acts, self._state = policy(obs, self._state, **self._kwargs)
     acts = {k: convert(v) for k, v in acts.items()}
+
+    print("Action", acts)
+    print("State:", prev_state)
+    stoch_state = self._state[0][0]['stoch']
+    intr_reward = self._intrinsic_reward(stoch_state, acts)
+
+
     if obs['is_last'].any():
       mask = 1 - obs['is_last']
       acts = {k: v * self._expand(mask, len(v.shape)) for k, v in acts.items()}
     acts['reset'] = obs['is_last'].copy()
     self._acts = acts
-    trns = {**obs, **acts}
+    trns = {**obs, **acts, **self._state[0][0]}
+
+
+    obs['reward'] = [obs['reward'][0] + self.counts.beta * intr_reward]
     if obs['is_first'].any():
       for i, first in enumerate(obs['is_first']):
         if first:

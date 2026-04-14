@@ -7,14 +7,11 @@ import elements
 from jax._src.core import axis_frame
 import numpy as np
 
-from . import chunk as chunklib
-from . import limiters
-from . import selectors
 import jax.numpy as jnp
 
 class Counts:
     def __init__(self, act_space, stoch_size=1, classes_size=1, beta=1, init_count=1, mode='state_action', count_imagined=True):
-        self.num_actions = act_space['action'].high - act_space['action'].low + 1
+        self.num_actions = act_space['action'].shape[0]
         self.stoch_size = stoch_size
         self.classes_size = classes_size
         self.beta = beta
@@ -40,17 +37,26 @@ class Counts:
         elif self.mode == 'state':
             return jnp.zeros((self.stoch_size, self.classes_size), dtype=jnp.int32) + self.init_count
 
-    @elements.timer.section('counts_add')    
-    def counts_add(self, step, worker=0):
-        step = {k: v for k, v in step.items() if not k.startswith('log/')}
-        action_id = step['action']
-        stoch_state = step['dyn/stoch']
+    # @elements.timer.section('counts_add')    
+    # def counts_add(self, step, worker=0):
+    #     step = {k: v for k, v in step.items() if not k.startswith('log/')}
+    #     print("Step keys", step.keys())
+    #     action_id = np.argmax(step['action'])
+    #     stoch_state = step['stoch']
+    #     print("Action id shape", action_id)
+    #     print("Stoch state shape", stoch_state.shape)
 
-        if self.mode == 'state_action':
-            np.add.at(self._checkpoint_counts, action_id, stoch_state.astype(np.int32))
+    #     if self.mode == 'state_action':
+    #         np.add.at(self._checkpoint_counts, action_id, stoch_state.astype(np.int32))
 
-        elif self.mode == 'state':
-            self._checkpoint_counts += stoch_state.astype(np.int32)
+    #     elif self.mode == 'state':
+    #         self._checkpoint_counts += stoch_state.astype(np.int32)
+
+    def counts_add(self, state, action):
+        if self.mode == "state_action":
+            self._checkpoint_counts[action] += state
+        elif self.mode == "state":
+            self._checkpoint_counts += state
 
     def add_counts(self, additional_counts):
         self._checkpoint_counts += additional_counts.astype(np.int32)

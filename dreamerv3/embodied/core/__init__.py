@@ -19,6 +19,8 @@ from .batcher import Batcher
 from .metrics import Metrics
 from .uuid import uuid
 
+from .counts import Counts
+
 from .batch import BatchEnv
 from .random import RandomAgent
 from .distr import Client, Server, BatchServer

@@ -45,9 +45,10 @@ def main(argv=None):
     if args.script == 'train':
       replay = make_replay(config, logdir / 'replay')
       env = make_envs(config)
+      counts = make_counts(config)
       cleanup.append(env)
       agent = agt.Agent(env.obs_space, env.act_space, step, config)
-      embodied.run.train(agent, env, replay, logger, args)
+      embodied.run.train(agent, env, replay, logger, counts, args)
 
     elif args.script == 'train_save':
       replay = make_replay(config, logdir / 'replay')
@@ -145,6 +146,19 @@ def make_replay(
   else:
     raise NotImplementedError(config.replay)
   return replay
+
+def make_counts(config):
+  env = make_envs(config)
+  act_space = {k: v for k, v in env.act_space.items() if k != 'reset'}
+  env.close()
+  return embodied.counts.Counts(
+    act_space,
+    config.rssm.stoch, 
+    config.rssm.classes,
+    config.exploration.beta,
+    config.exploration.init_count,
+    config.exploration.mode,
+  )
 
 
 def make_envs(config, **overrides):

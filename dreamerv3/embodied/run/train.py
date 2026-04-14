@@ -5,7 +5,7 @@ import jax
 import numpy as np
 
 
-def train(agent, env, replay, logger, args):
+def train(agent, env, replay, logger, counts, args):
 
   logdir = embodied.Path(args.logdir)
   logdir.mkdirs()
@@ -55,10 +55,11 @@ def train(agent, env, replay, logger, args):
         stats[f'max_{key}'] = ep[key].max(0).mean()
     metrics.add(stats, prefix='stats')
 
-  driver = embodied.Driver(env)
+  driver = embodied.Driver(env, counts)
   driver.on_episode(lambda ep, worker: per_episode(ep))
   driver.on_step(lambda tran, _: step.increment())
   driver.on_step(replay.add)
+
 
   print('Prefill train dataset.')
   random_agent = embodied.RandomAgent(env.act_space)
@@ -101,6 +102,11 @@ def train(agent, env, replay, logger, args):
       logger.add(replay.stats, prefix='replay')
       logger.add(timer.stats(), prefix='timer')
       logger.write(fps=True)
+  
+  # def increment_counts(trans, worker):
+  #   counts.counts_add(trans, worker)
+
+  # driver.on_step(increment_counts)
   driver.on_step(train_step)
 
   checkpoint = embodied.Checkpoint(logdir / 'checkpoint.ckpt')
