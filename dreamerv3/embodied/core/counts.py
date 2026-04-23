@@ -19,9 +19,9 @@ class Counts:
         self.init_count = init_count
         self.count_imagined = count_imagined
         if mode == 'state_action':
-            self._checkpoint_counts = np.zeros((self.num_actions, self.stoch_size, self.classes_size), dtype=np.int32) + init_count
+            self._checkpoint_counts = np.zeros((self.num_actions, self.stoch_size, self.classes_size), dtype=np.float32) + init_count
         elif mode == 'state':
-            self._checkpoint_counts = np.zeros((self.stoch_size, self.classes_size), dtype=np.int32) + init_count
+            self._checkpoint_counts = np.zeros((self.stoch_size, self.classes_size), dtype=np.float32) + init_count
         else:
             raise ValueError(f"Unknown mode {mode} for Counts module.")
 
