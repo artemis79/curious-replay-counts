@@ -74,8 +74,9 @@ class Driver:
 
     print("Action", acts)
     print("State:", prev_state)
-    stoch_state = self._state[0][0]['stoch']
-    intr_reward = self._intrinsic_reward(stoch_state, acts)
+    if prev_state is not None:
+      stoch_state = self._state[0][0]['stoch']
+      intr_reward = self._intrinsic_reward(stoch_state, acts)
 
 
     if obs['is_last'].any():
@@ -83,7 +84,7 @@ class Driver:
       acts = {k: v * self._expand(mask, len(v.shape)) for k, v in acts.items()}
     acts['reset'] = obs['is_last'].copy()
     self._acts = acts
-    trns = {**obs, **acts, **self._state[0][0]}
+    trns = {**obs, **acts}
 
 
     obs['reward'] = [obs['reward'][0] + self.counts.beta * intr_reward]
