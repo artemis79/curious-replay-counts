@@ -58,8 +58,10 @@ class Driver:
     return rewards
   
 
-  def increment_counts(self, stoch_state, act):
-    self.counts.counts_add(stoch_state, act)
+  def increment_counts(self, stoch_state, action):
+    action = action['action'].argmax()
+    stoch_state = stoch_state[0]
+    self.counts.counts_add(stoch_state, action)
     
 
   def _step(self, policy, step, episode):
@@ -77,6 +79,7 @@ class Driver:
     if prev_state is not None:
       stoch_state = self._state[0][0]['stoch']
       intr_reward = self._intrinsic_reward(stoch_state, acts)
+      self.increment_counts(stoch_state, acts)
 
 
     if obs['is_last'].any():
