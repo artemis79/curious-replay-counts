@@ -51,8 +51,6 @@ class Driver:
         state_counts = self.counts._checkpoint_counts * stoch_state
         state_counts = np.sum(state_counts, axis=-1)
         state_counts = np.min(state_counts, axis=-1)
-        # actions_expanded = jnp.expand_dims(action, -1)
-        print(state_counts)
         rewards = np.sqrt(2 * np.log(np.sum(state_counts)) / state_counts[action])
 
     return rewards
@@ -76,6 +74,7 @@ class Driver:
 
     print("Action", acts)
     print("State:", prev_state)
+    intr_reward = 0.
     if prev_state is not None:
       stoch_state = self._state[0][0]['stoch']
       intr_reward = self._intrinsic_reward(stoch_state, acts)
@@ -98,6 +97,8 @@ class Driver:
     for i in range(len(self._env)):
       trn = {k: v[i] for k, v in trns.items()}
       [self._eps[i][k].append(v) for k, v in trn.items()]
+      # TODO: Change this line for when you have more than one environment
+      self._eps[i]['intr_reward'] = [intr_reward]
       [fn(trn, i, **self._kwargs) for fn in self._on_steps]
       step += 1
     if obs['is_last'].any():
