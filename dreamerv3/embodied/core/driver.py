@@ -72,11 +72,10 @@ class Driver:
     acts, self._state = policy(obs, self._state, **self._kwargs)
     acts = {k: convert(v) for k, v in acts.items()}
 
-    print("Action", acts)
-    print("State:", prev_state)
+
     intr_reward = 0.
     if prev_state is not None:
-      stoch_state = self._state[0][0]['stoch']
+      stoch_state = self.prev_state[0][0]['stoch']
       intr_reward = self._intrinsic_reward(stoch_state, acts)
       self.increment_counts(stoch_state, acts)
 
@@ -86,10 +85,11 @@ class Driver:
       acts = {k: v * self._expand(mask, len(v.shape)) for k, v in acts.items()}
     acts['reset'] = obs['is_last'].copy()
     self._acts = acts
-    trns = {**obs, **acts}
 
 
     obs['reward'] = [obs['reward'][0] + self.counts.beta * intr_reward]
+    trns = {**obs, **acts}
+    
     if obs['is_first'].any():
       for i, first in enumerate(obs['is_first']):
         if first:
@@ -98,7 +98,10 @@ class Driver:
       trn = {k: v[i] for k, v in trns.items()}
       [self._eps[i][k].append(v) for k, v in trn.items()]
       # TODO: Change this line for when you have more than one environment
-      self._eps[i]['intr_reward'] = [intr_reward]
+      if intr_reward not in self._eps[i]:
+        self._eps[i]['intr_reward'] = [intr_reward]
+      else:
+        self._eps[i]['intr_reward'].append(intr_reward)
       [fn(trn, i, **self._kwargs) for fn in self._on_steps]
       step += 1
     if obs['is_last'].any():
