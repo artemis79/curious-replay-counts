@@ -75,7 +75,7 @@ class Driver:
 
     intr_reward = 0.
     if prev_state is not None:
-      stoch_state = self.prev_state[0][0]['stoch']
+      stoch_state = prev_state[0][0]['stoch']
       intr_reward = self._intrinsic_reward(stoch_state, acts)
       self.increment_counts(stoch_state, acts)
 
